@@ -94,7 +94,7 @@ is.na(x)
 *filter() only includes rows where the condition is TRUE*
 
 ##exercises:
-#Find all flights that:
+Find all flights that:
 
 1. Had an arrival delay of two or more hours
 ```{r}
