@@ -1,0 +1,126 @@
+---
+title: "ch_5__data_transformation"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(nycflights13)
+library(tidyverse)
+```
+
+exploring the basic dataframe
+
+```{r}
+flights
+```
+
+Notes from the book: 
+
+The verbs to know: 
+
+1. Pick observations by their values (filter()).
+2. Reorder the rows (arrange()).
+3. Pick variables by their names (select()).
+4. Create new variables with functions of existing variables (mutate()).
+5. Collapse many values down to a single summary (summarise()).
+
+All verbs work similarly:
+
+1. The first argument is a data frame.
+2. The subsequent arguments describe what to do with the data frame, using the variable names (without quotes).
+3. The result is a new data frame.
+
+Together, the verbs make it easy to chain together multiple simple steps to achieve a complex result. 
+
+##filter
+```{r}
+#filter the flights data for the first month and first day
+filter(flights, month == 1, day == 1)
+```
+
+wrapping a command in `()` will run the results AND show the output. Note the difference:
+
+```{r}
+dec25 <- filter(flights, month == 12, day == 25)
+
+(dec25 <- filter(flights, month == 12, day == 25))
+```
+
+using `OR` aka `|`
+
+```{r}
+#this doesn't work to find flights in november OR december
+filter(flights, month == 11 | 12)
+```
+
+here's what DOES work:
+```{r}
+filter(flights, month == 11 | month == 12)
+```
+
+and alternatively: 
+```{r}
+filter(flights, month %in% c(11, 12))
+#this is the first time we see %in%
+#select every row where [x] is one of the values in the c() grouping. 
+```
+
+and because that works and it looks like the book wants to use it later:
+```{r}
+nov_dec <- filter(flights, month %in% c(11, 12))
+```
+
+##missing values
+
+```{r}
+# Let x be Mary's age. We don't know how old she is.
+x <- NA
+
+# Let y be John's age. We don't know how old he is.
+y <- NA
+
+# Are John and Mary the same age?
+x == y
+#> [1] NA
+# We don't know!
+```
+
+If you want to determine if a value is missing, use is.na():
+```{r}
+is.na(x)
+```
+
+*filter() only includes rows where the condition is TRUE*
+
+##exercises:
+#Find all flights that:
+
+1. Had an arrival delay of two or more hours
+```{r}
+#we need the flights data
+flights %>% 
+  #and arrival delay is in minutes, so filter that to greater than 120 minutes
+  filter(arr_delay >= 120) 
+```
+
+2. Flew to Houston (IAH or HOU)
+```{r}
+flights %>% 
+  filter(dest %in% c("IAH", "HOU"))
+```
+
+3. Were operated by United, American, or Delta
+
+4. Departed in summer (July, August, and September)
+5. Arrived more than two hours late, but didn’t leave late
+6. Were delayed by at least an hour, but made up over 30 minutes in flight
+7. Departed between midnight and 6am (inclusive)
+8. Another useful dplyr filtering helper is between(). What does it do? Can you use it to simplify the code needed to answer the previous challenges?
+9. How many flights have a missing dep_time? What other variables are missing? What might these rows represent?
+
+Why is NA ^ 0 not missing? Why is NA | TRUE not missing? Why is FALSE & NA not missing? Can you figure out the general rule? (NA * 0 is a tricky counterexample!)
+
+```{r}
+```
+
