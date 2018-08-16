@@ -195,3 +195,240 @@ flights %>%
 ```
 
 ##5.4 Select columns with select()
+
+```{r}
+flights %>%
+  rename(tail_num = tailnum)
+```
+
+###Exercises 
+Brainstorm as many ways as possible to select dep_time, dep_delay, arr_time, and arr_delay from flights.
+
+What happens if you include the name of a variable multiple times in a select() call?
+```{r}
+flights %>% 
+  select(tailnum, tailnum)
+```
+
+What does the one_of() function do? Why might it be helpful in conjunction with this vector?
+
+```{r}
+vars <- c("year", "month", "day", "dep_delay", "arr_delay")
+
+flights %>% 
+  select(one_of(vars))
+```
+Does the result of running the following code surprise you? How do the select helpers deal with case by default? How can you change that default?
+```{r}
+select(flights, contains("TIME"))
+```
+
+##5.5 Add new variables with `mutate()`
+```{r}
+flights_sml <- select(flights, 
+  year:day, 
+  ends_with("delay"), 
+  distance, 
+  air_time) 
+mutate(flights_sml,
+  gain = dep_delay - arr_delay,
+  speed = distance / air_time * 60
+)
+```
+
+###5.5.2 Exercises
+Currently `dep_time` and `sched_dep_time` are convenient to look at, but hard to compute with because they’re not really continuous numbers. Convert them to a more convenient representation of number of minutes since midnight.
+```{r}
+flights %>% 
+  select(dep_time, sched_dep_time) %>% 
+  mutate(dep_hr_mins = (dep_time %/% 100)*60,
+         dep_minute = dep_time %% 100,
+         sched_hr_mins = (sched_dep_time %/% 100)*60,
+         sched_mins = sched_dep_time %% 100) %>% 
+  transmute(dep_mins_since_midnight = dep_minute + dep_hr_mins,
+            sched_dep_mins = sched_hr_mins + sched_mins)
+```
+
+Compare `air_time` with `arr_time` - `dep_time`. What do you expect to see? What do you see? What do you need to do to fix it?
+```{r}
+flights %>% 
+  select(air_time, arr_time, dep_time) %>% 
+  mutate(flight_time = arr_time - dep_time)
+#The problem is continuous numbers. dep_time and arr_time are numerical hmm; and would need to be converted like the previous problem. 
+```
+
+Compare dep_time, sched_dep_time, and dep_delay. How would you expect those three numbers to be related?
+```{r}
+flights %>% 
+  select(dep_time, sched_dep_time, dep_delay)
+#I expect that dep_delay is the number of minutes that a flight was delayed. negative numbers mean the dep_time happened BEFORE the sched_dep_time
+```
+
+Find the 10 most delayed flights using a ranking function. How do you want to handle ties? Carefully read the documentation for min_rank().
+```{r}
+flights %>% 
+  mutate(worst_delay = min_rank(desc(arr_delay))) %>% 
+  arrange(worst_delay) %>% 
+  filter(worst_delay <= 10)
+#ties can be broken by arranging using two factors.
+```
+
+What does 1:3 + 1:10 return? Why?
+```{r}
+(1:3 + 1:10)
+#returns "longer object length is not a multiple of shorter object length [1]  2  4  6  5  7  9  8 10 12 11" because the first object length is shorter and loops through when it reaches it's end.
+```
+
+What trigonometric functions does R provide?
+```{r}
+#base::Trig is the fucntion set specific to trig. It contains
+#cos(x)
+#sin(x)
+#tan(x)
+
+#acos(x)
+#asin(x)
+#atan(x)
+#atan2(y, x)
+
+#cospi(x)
+#sinpi(x)
+#tanpi(x)
+```
+
+##5.6 Grouped summaries with summarise()
+Summarise collapses data into a single row; but really only works when paired with `group_by()`.  
+
+in the book example: 
+```{r}
+by_day <- group_by(flights, year, month, day)
+summarise(by_day, delay = mean(dep_delay, na.rm = TRUE))
+```
+this groups according to each of those factors, then summarises according to the smallest group that we grouped_by. 
+
+###5.6.1 Combining multiple operations with the pipe
+heh.
+
+So, before the pipe, we had to name each of the smaller data frames as we build toward our final data frame; like this: 
+```{r}
+#first we group
+by_dest <- group_by(flights, dest)
+
+#then we summarise(ze)
+delay <- summarise(by_dest,
+  count = n(),
+  dist = mean(distance, na.rm = TRUE),
+  delay = mean(arr_delay, na.rm = TRUE))
+
+#then we filter
+delay <- filter(delay, count > 20, dest != "HNL")
+
+#then we visualize
+ggplot(data = delay, mapping = aes(x = dist, y = delay)) +
+  geom_point(aes(size = count), alpha = 1/3) +
+  geom_smooth(se = FALSE) +
+  theme_light() 
+```
+
+alternatively, we can use the pipe (it's not a pipe) to do all of this in "one" step.
+
+the pipe is one of the key criteria for belonging to the tidyverse.
+```{r}
+delays <- flights %>% 
+  group_by(dest) %>% 
+  summarise(
+    count = n(),
+    dist = mean(distance, na.rm = TRUE),
+    delay = mean(arr_delay, na.rm = TRUE)
+  ) %>% 
+  filter(count > 20, dest != "HNL")
+```
+
+###5.6.2 Missing values
+what happens if we dont use `na.rm`? Look at all these `NA`'s!
+```{r}
+flights %>% 
+  group_by(year, month, day) %>% 
+  summarise(mean = mean(dep_delay))
+```
+
+NOTE: aggregation functions obey the usual rule of missing values: if there’s any missing value in the input, the output will be a missing value. so we use `na.rm` to get rid of the `NA` values.
+
+```{r}
+flights %>% 
+  group_by(year, month, day) %>% 
+  summarise(mean = mean(dep_delay, na.rm = TRUE))
+```
+
+```{r}
+#save the "is not NA" dataset
+not_cancelled <- flights %>% 
+  filter(!is.na(dep_delay), !is.na(arr_delay))
+
+not_cancelled %>% 
+  group_by(year, month, day) %>% 
+  summarise(mean = mean(dep_delay))
+```
+
+###5.6.3 Counts
+Always good to do counts whenever summarising; ANY aggregation; to make sure you aren't using small samples. 
+
+    * "it’s always a good idea to include either a count (n()), or a count of non-missing values (sum(!is.na(x)))"
+
+When looking at plots of summaries vs counts (group size), variation increases as sample size decreases. Check this, and if you see this happening, filter out groups with small observations. This shows more of the pattern and less of the small-sampling-variation. 
+
+```{r}
+#using the delays dataset
+delays %>% 
+  #filter out any values with a count less than 25
+  filter(n > 25) %>% 
+  #then show me a scatterplot
+  ggplot(mapping = aes(x = n, y = delay)) + 
+    geom_point(alpha = 1/10)
+```
+
+Here's another example from the book: 
+
+```{r}
+#install.packages("Lahman")
+#load Lahman
+library(Lahman)
+
+# Convert to a tibble so it prints nicely
+batting <- as_tibble(Lahman::Batting)
+
+batters <- batting %>% 
+  #group all at bats by the playerID
+  group_by(playerID) %>% 
+  #summarise the batting average and the at bats
+  #remembering to remove rows with NA values
+  summarise(
+    ba = sum(H, na.rm = TRUE) / sum(AB, na.rm = TRUE),
+    ab = sum(AB, na.rm = TRUE)
+  )
+
+batters %>% 
+  filter(ab > 30) %>% 
+  ggplot(mapping = aes(x = ab, y = ba)) +
+    geom_point() + 
+    geom_smooth(se = FALSE)
+#> `geom_smooth()` using method = 'gam' and formula 'y ~ s(x, bs = "cs")'
+```
+
+(You can find a good explanation of this problem at http://varianceexplained.org/r/empirical_bayes_baseball/ and http://www.evanmiller.org/how-not-to-sort-by-average-rating.html.) 
+
+###5.6.4 Useful summary functions
+
+Also useful:
+
+    * median(x)
+    * measures of spread: sd(x), IQR(x), mad(x): _Standard Deviation_ is a common measurement of spread. Sometimes the interquartile range or median absolute deviation is better if we have outliers. 
+    * Measures of rank: min(x), quantile(x, 0.25), max(x): for quantile, the decimal is the percentage.
+    * Measures of position: first(x), nth(x, 2), last(x)
+    * Counts: n(), which takes no arguments, and returns the size of the current group. To count the number of non-missing values, use sum(!is.na(x)). To count the number of distinct (unique) values, use n_distinct(x). Or even count() -- this is a dplyr verb
+
+###5.6.5 Grouping by multiple variable
+
+
+
+###5.6.7 Exercises
