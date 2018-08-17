@@ -429,6 +429,28 @@ Also useful:
 
 ###5.6.5 Grouping by multiple variable
 
+"When you group by multiple variables, each summary peels off one level of the grouping. That makes it easy to progressively roll up a dataset"
 
+```{r}
+# using the flights dataset build a dataset that's first grouped by year, then month, then day
+daily <- group_by(flights, year, month, day)
+# count the number of flights per day, this automatically includes month and year
+(per_day   <- summarise(daily, flights = n()))
+```
+
+```{r}
+# use the same data and aggregate by month, which automatically rolls the year grouping as well
+(per_month <- summarise(per_day, flights = sum(flights)))
+```
+
+```{r}
+(per_year  <- summarise(per_month, flights = sum(flights)))
+```
+
+it's cool to roll up summaries for counts and sums, but this is NOT ok with rank-based stats like medians. Give a hard think about means and variances. "the sum of groupwise sums is the overall sum, but the median of groupwise medians is not the overall median." so says the book.
+
+###5.6.6 Ungrouping
+
+ungroup() does what it says, ungroups grouped data. 
 
 ###5.6.7 Exercises
