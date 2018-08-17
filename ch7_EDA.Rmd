@@ -1,0 +1,76 @@
+---
+title: "ch7_eda"
+author: "jason grahn"
+date: "8/16/2018"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+#7 Exploratory Data Analysis
+##7.1 Introduction
+
+From the text:
+
+"This chapter will show you how to use visualisation and transformation to explore your data in a systematic way... EDA is an iterative cycle. You:
+
+    1. Generate questions about your data.
+    2. Search for answers by visualising, transforming, and modelling your data.
+    3. Use what you learn to refine your questions and/or generate new questions.
+
+During the initial phases of EDA you should feel free to investigate every idea that occurs to you... EDA is an important part of any data analysis, even if the questions are handed to you on a platter, because you always need to investigate the quality of your data. Data cleaning is just one application of EDA: you ask questions about whether your data meets your expectations or not. To do data cleaning, you’ll need to deploy all the tools of EDA: visualisation, transformation, and modelling." 
+
+###7.1.1 Prerequisites
+
+primary use of dplyr and ggplot2 in this chapter, load the tidy!
+```{r}
+library(tidyverse)
+```
+
+###7.2 Questioning
+
+"Far better an approximate answer to the right question, which is often vague, than an exact answer to the wrong question, which can always be made precise.” — John Tukey"
+
+EDA is here to understand the data! EDA is a creative process. There are two main types of questions:
+    
+    1. What type of variation occurs within my variables?
+    2. What type of covariation occurs between my variables? 
+
+define some terms: 
+
+    A *variable* is a quantity, quality, or property that you can measure.
+    A *value* is the state of a variable when you measure it. The value of a variable may change from measurement to measurement.
+    An *observation* is a set of measurements made under similar conditions (you usually make all of the measurements in an observation at the same time and on the same object). An observation will contain several values, each associated with a different variable. I’ll sometimes refer to an observation as a data point.
+    *Tabular data* is a set of values, each associated with a variable and an observation. Tabular data is tidy if each value is placed in its own “cell”, each variable in its own column, and each observation in its own row.
+
+##7.3 Variation
+"Variation is the tendency of the values of a variable to change from measurement to measurement... The best way to understand that pattern is to visualise the distribution of the variable’s values."
+
+###7.3.1 Visualising distributions
+visualization depends on categorical vs continuous data.
+*categorical* data can take only take a set of values. these are typically factors or character vectors.
+
+*categorical* distributions happen through bar charts where height equates to count values (want these manually? use dplyr::count() )
+```{r}
+  ggplot(data = diamonds) +
+  geom_bar(mapping = aes(x = cut)) +
+  theme_light() 
+```
+
+*continuous* values take infinite set of ordered values. these are typically numerical. histograms are great start for evaluating distribution of continuous data, where the height is the count of values that fit into a _bucket_. Manually computable by combining dplyr::count() and ggplot2::cut_width():
+
+```{r}
+ggplot(data = diamonds) +
+  geom_histogram(mapping = aes(x = carat), binwidth = 0.5) +
+  theme_light()
+```
+
+"always explore a variety of binwidths when working with histograms, as different binwidths can reveal different patterns." 
+
+###7.3.2 Typical values
+
+http://r4ds.had.co.nz/exploratory-data-analysis.html
+

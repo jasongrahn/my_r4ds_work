@@ -1,0 +1,36 @@
+---
+title: "ch6_Workflow:scripts"
+output: github_notebook
+---
+
+this chapter goes over how to use the script editor, which is what i've been working in to create this markdown doccos. 
+
+###6.1 Running code
+
+sample code
+```{r}
+library(dplyr)
+library(nycflights13)
+
+not_cancelled <- flights %>% 
+  filter(!is.na(dep_delay), !is.na(arr_delay))
+
+not_cancelled %>% 
+  group_by(year, month, day) %>% 
+  summarise(mean = mean(dep_delay))
+```
+
+I'm guessing this is a chapter full of hotkeys and best-practices ?
+
+command+shift+s runs the scripts (mac)
+ctrl+shift+s runs the scrupts (pc)
+
+    * start your scripts with necessary packages. if you're sharing code, it calls out which packages need to be loaded. 
+    * "Note, however, that you should never include install.packages() or setwd() in a script that you share. It’s very antisocial to change settings on someone else’s computer!"
+    
+### 6.3 Practice
+
+yeah ok, short chapter. 
+
+    
+    
