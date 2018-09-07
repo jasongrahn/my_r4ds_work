@@ -290,3 +290,41 @@ diamonds %>%
 ###7.5.3 Two continuous variables
 
 ##7.6 Patterns and models
+look for patterns (duh)
+if you see a pattern, ask:
+    
+    Could this pattern be due to coincidence (i.e. random chance)?    
+    How can you describe the relationship implied by the pattern?
+    How strong is the relationship implied by the pattern?
+    What other variables might affect the relationship?
+    Does the relationship change if you look at individual subgroups of the data?
+    
+```{r}
+#looking at old faithful data shows a relationship between eruption wait time and eruption time 
+
+ggplot(data = faithful) + 
+  geom_point(mapping = aes(x = eruptions, y = waiting))
+```
+
+Patterns reveal covariation! If variation creates uncertainty, covariation reduces it. _IF_ covariation is due to causal relationship, use one value to control the other (linear modeling).
+
+This code fits a model that predicts `price` from `carat` then finds residuals (diff between prediction and actual). Residuals show up price of diamond once the effect of carat is abstracted.
+
+```{r model price and carat}
+library(modelr)       #use the modelR library
+
+#build a linear model that predicts the log of Price based on the log of carat using the diamonds data
+mod <- lm(log(price) ~ log(carat), data = diamonds)
+
+#make a new df using the diamonds data
+diamonds2 <- diamonds %>% 
+  #add the residuals from the model
+  add_residuals(mod) %>% 
+  #then square the residuals to make the resid variable
+  mutate(resid = exp(resid))
+
+#then show me a scatter plot of carats against the residuals
+ggplot(data = diamonds2) + 
+  geom_point(mapping = aes(x = carat, y = resid))
+```
+
